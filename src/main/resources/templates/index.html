@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스무고개 챗봇</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+            background-color: white;
+            color: #2d3436;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .main-content {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 20px;
+        }
+        
+        .left-panel {
+            flex: 0 0 65%;
+            background-color: white;
+            border-radius: 20px;
+            overflow: hidden;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .left-panel > div {
+            width: 100%;
+            max-width: 450px;
+        }
+        
+        .right-panel {
+            flex: 0 0 35%;
+            background-color: transparent;
+            border-radius: 0;
+            border: none;
+            overflow: hidden;
+            padding: 0;
+            max-height: 1300px;
+            overflow-y: auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+        
+        .header h1 {
+            color: #6c5ce7;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #636e72;
+            font-size: 15px;
+        }
+        
+        .chillguy-response {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            background-color: white;
+            padding: 0;
+            width: 100%;
+            justify-content: flex-end;
+        }
+        
+        .speech-bubble {
+            flex: 1;
+            background-color: #a29bfe;
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            position: relative;
+            margin-right: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+            min-width: 300px;
+            width: calc(100% - 150px);
+        }
+        
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            right: -15px;
+            top: 25px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: transparent transparent transparent #a29bfe;
+        }
+        
+        /* 상태별 색상만 남기고 나머지 제거 */
+        .speech-bubble.default {
+            background-color: #a29bfe;
+        }
+        
+        .speech-bubble.answer {
+            background-color: #ff7675;
+        }
+        
+        .speech-bubble.initial {
+            background-color: white;
+            color: #2d3436;
+        }
+        
+        .speech-bubble.default::after {
+            border-color: transparent transparent transparent #a29bfe;
+        }
+        
+        .speech-bubble.answer::after {
+            border-color: transparent transparent transparent #ff7675;
+        }
+        
+        .speech-bubble.initial::after {
+            border-color: transparent transparent transparent white;
+        }
+        
+        .character-image {
+            width: 130px;
+            height: auto;
+            object-fit: contain;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        
+        .question {
+            margin: 25px 0;
+            padding: 15px;
+            background-color: white;
+            border: 1px solid #eee;
+            border-radius: 15px;
+            font-size: 15px;
+            width: 100%;
+        }
+        
+        .form-container {
+            margin-top: 15px;
+            width: 100%;
+        }
+        
+        .form-divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+        
+        .form-divider:before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #ddd;
+            z-index: 0;
+        }
+        
+        .form-divider span {
+            background-color: white;
+            padding: 0 15px;
+            position: relative;
+            z-index: 1;
+            color: #636e72;
+            font-size: 14px;
+        }
+        
+        .input-form {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .input-form textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dfe6e9;
+            border-radius: 15px;
+            resize: none;
+            height: 100px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s;
+            background-color: white;
+            max-width: 100%;
+        }
+        
+        .input-form textarea:focus {
+            outline: none;
+            border-color: #6c5ce7;
+        }
+        
+        .button-container {
+            text-align: right;
+            margin-top: 12px;
+            width: 100%;
+        }
+        
+        .send-button {
+            background-color: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .answer-button {
+            background-color: #fd79a8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .send-button:hover, .answer-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .send-button:hover {
+            background-color: #5649c0;
+        }
+        
+        .answer-button:hover {
+            background-color: #e84393;
+        }
+        
+        .question-label, .answer-label {
+            font-weight: bold;
+            color: #2d3436;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        /* 히스토리 카드 스타일 */
+        .history-header {
+            text-align: center;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            color: #636e72;
+        }
+        
+        .chat-history {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .history-item {
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .history-question {
+            background-color: #f1f2f6;
+            border-left: 3px solid #6c5ce7;
+        }
+        
+        .history-answer {
+            background-color: #f8f9fa;
+            border-left: 3px solid #a29bfe;
+            margin-left: 20px;
+        }
+        
+        .history-label {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #636e72;
+        }
+        
+        .history-text {
+            font-size: 14px;
+        }
+        
+        @media (max-width: 1000px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .left-panel {
+                flex: 0 0 auto;
+                width: 100%;
+            }
+            
+            .right-panel {
+                max-height: 300px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .speech-bubble {
+                min-width: 200px;
+                width: calc(100% - 100px);
+            }
+            
+            .character-image {
+                width: 90px;
+            }
+        }
+        
+        /* 카운터 카드 스타일 수정 */
+        .counter-card {
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .counter-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .counter-label {
+            font-weight: bold;
+            color: #636e72;
+            font-size: 14px;
+        }
+        
+        .counter-value {
+            font-size: 16px;
+            color: #2d3436;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        
+        .counter-value.warning {
+            color: #e17055;
+        }
+        
+        .counter-value.danger {
+            color: #d63031;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        /* 입력 폼 카드 스타일 */
+        .input-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 3px solid #6c5ce7;
+        }
+        
+        .answer-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 3px solid #fd79a8;
+        }
+        
+        /* 카드 스타일 - 그림자 제거 */
+        .card {
+            background-color: white;
+            border-radius: 15px;
+            border: 1px solid #eee;
+            padding: 20px;
+            box-shadow: none;
+        }
+        
+        .card-header {
+            text-align: center;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            color: #636e72;
+        }
+        
+        /* 프로그레스 바 스타일 */
+        .progress-bar-container {
+            margin-top: 10px;
+            width: 100%;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background-color: #fff;
+            border-radius: 2px;
+            animation: progress 1.5s infinite ease-in-out;
+        }
+        
+        .thinking-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+            display: block;
+        }
+        
+        @keyframes progress {
+            0% { width: 0; }
+            50% { width: 70%; }
+            100% { width: 0; }
+        }
+        
+        /* 대화 히스토리 카드 높이 조정 */
+        .right-panel .card:last-child {
+            min-height: 660px; /* 더 큰 높이로 설정 */
+        }
+        
+        /* 채팅 히스토리 영역은 그대로 유지 */
+        .chat-history {
+            overflow-y: visible;
+            max-height: none;
+        }
+        
+        /* 스크롤바 스타일 개선 */
+        .chat-history::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-history::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .chat-history::-webkit-scrollbar-thumb {
+            background: #a29bfe;
+            border-radius: 10px;
+        }
+        
+        .chat-history::-webkit-scrollbar-thumb:hover {
+            background: #6c5ce7;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <!-- 왼쪽 패널 - 칠가이와 대화 -->
+        <div class="left-panel">
+            <div class="header">
+                <h1>스무고개 챗봇</h1>
+                <p>칠가이와 대화해보세요!</p>
+            </div>
+            
+            <!-- 응답 영역 -->
+            <div class="chillguy-response">
+                <div th:class="${isBubbleRed != null && isBubbleRed ? 'speech-bubble answer' : 'speech-bubble default'}">
+                    <span th:text="${response != null ? response : '안녕하세요! 저는 칠가이입니다. 무엇이든 물어보세요!'}"></span>
+                    <!-- 프로그레스 바 추가 -->
+                    <div id="thinking-indicator" class="progress-bar-container" style="display: none;">
+                        <div class="progress-bar"></div>
+                        <span class="thinking-text">생각 중...</span>
+                    </div>
+                </div>
+                <img src="/images/chillicorn.png" alt="칠가이" class="character-image">
+            </div>
+            
+            <div class="form-container">
+                <!-- 질문 입력 폼 - 카드 스타일 -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="card-header">질문하기</div>
+                    <form class="input-form" action="/ask" method="post">
+                        <textarea name="question" placeholder="칠가이에게 질문하세요..." required></textarea>
+                        <div class="button-container">
+                            <button type="submit" class="send-button">질문하기</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- 정답 입력 폼 - 카드 스타일 -->
+                <div class="card">
+                    <div class="card-header">정답 입력하기</div>
+                    <form class="input-form" action="/answer" method="post">
+                        <textarea name="answer" placeholder="정답을 입력하세요..." required></textarea>
+                        <div class="button-container">
+                            <button type="submit" class="answer-button">정답 확인하기</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 오른쪽 패널 - 게임 상태 및 대화 히스토리 -->
+        <div class="right-panel">
+            <!-- 게임 상태 카드 -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">게임 상태</div>
+                <div class="counter-card">
+                    <div class="counter-item">
+                        <div class="counter-label">Questions Asked</div>
+                        <div class="counter-value" id="questionCounter" th:text="${questionCount} + '/20'">0/20</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-label">Guesses Made</div>
+                        <div class="counter-value" id="guessCounter" th:text="${guessCount} + '/3'">0/3</div>
+                    </div>
+                </div>
+                <!-- 리셋 버튼 -->
+                <div style="text-align: center; margin-top: 10px;">
+                    <a href="/reset" class="reset-button" style="background-color: #74b9ff; color: white; padding: 8px 15px; border-radius: 20px; text-decoration: none; font-size: 14px;">게임 리셋</a>
+                </div>
+            </div>
+            
+            <!-- 대화 히스토리 -->
+            <div class="card">
+                <div class="card-header">대화 히스토리</div>
+                <div class="chat-history">
+                    <!-- 대화 히스토리가 있을 경우 표시 -->
+                    <div th:if="${history != null and not #lists.isEmpty(history)}" th:each="item : ${history}">
+                        <!-- 질문 히스토리 -->
+                        <div class="history-item history-question">
+                            <span class="history-label">질문: </span>
+                            <span class="history-text" th:text="${item.question}"></span>
+                        </div>
+                        <!-- 답변 히스토리 -->
+                        <div class="history-item history-answer">
+                            <span class="history-label">칠가이: </span>
+                            <span class="history-text" th:text="${item.answer}"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- 히스토리가 없을 경우 보여줄 메시지 -->
+                    <div th:if="${history == null or #lists.isEmpty(history)}">
+                        <p style="text-align: center; color: #636e72; padding: 30px;">대화 기록이 없습니다. 칠가이에게 질문해보세요!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 페이지 하단에 스크립트 추가 -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 현재 카운터 값 가져오기
+            const questionCount = /*[[${questionCount}]]*/ 0;
+            const guessCount = /*[[${guessCount}]]*/ 0;
+            
+            // 폼과 버튼 요소 가져오기
+            const questionForm = document.querySelector('form[action="/ask"]');
+            const answerForm = document.querySelector('form[action="/answer"]');
+            const questionButton = questionForm.querySelector('button[type="submit"]');
+            const answerButton = answerForm.querySelector('button[type="submit"]');
+            const thinkingIndicator = document.getElementById('thinking-indicator');
+            
+            // 카운터 요소 가져오기
+            const questionCounter = document.getElementById('questionCounter');
+            const guessCounter = document.getElementById('guessCounter');
+            
+            // 카운터 표시 업데이트
+            updateCounters();
+            
+            // 버튼 상태 업데이트
+            updateButtonStates();
+            
+            // 질문 폼 제출 이벤트
+            questionForm.addEventListener('submit', function(e) {
+                // 카운터가 이미 최대값이면 제출 방지
+                if (questionCount >= 20) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // 정답 폼 제출 이벤트
+            answerForm.addEventListener('submit', function(e) {
+                // 카운터가 이미 최대값이면 제출 방지
+                if (guessCount >= 3) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // 카운터 표시 업데이트 함수
+            function updateCounters() {
+                questionCounter.textContent = questionCount + '/20';
+                guessCounter.textContent = guessCount + '/3';
+                
+                // 카운터 색상 변경
+                if (questionCount >= 15) {
+                    questionCounter.classList.add('warning');
+                }
+                if (questionCount >= 20) {
+                    questionCounter.classList.add('danger');
+                }
+                if (guessCount >= 2) {
+                    guessCounter.classList.add('warning');
+                }
+                if (guessCount >= 3) {
+                    guessCounter.classList.add('danger');
+                }
+            }
+            
+            // 버튼 상태 업데이트 함수
+            function updateButtonStates() {
+                // 질문 버튼 상태 업데이트 (20번 질문 완료 또는 3번 정답 시도 완료 시 비활성화)
+                if (questionCount >= 20 || guessCount >= 3) {
+                    questionButton.disabled = true;
+                    questionButton.style.opacity = '0.5';
+                    questionButton.style.cursor = 'not-allowed';
+                }
+                
+                // 정답 버튼 상태 업데이트
+                if (guessCount >= 3) {
+                    answerButton.disabled = true;
+                    answerButton.style.opacity = '0.5';
+                    answerButton.style.cursor = 'not-allowed';
+                }
+            }
+            
+            // 프로그레스 바 제어
+            questionForm.addEventListener('submit', function() {
+                thinkingIndicator.style.display = 'block';
+            });
+            
+            answerForm.addEventListener('submit', function() {
+                thinkingIndicator.style.display = 'block';
+            });
+            
+            // 대화 히스토리 스크롤 자동 최하단 이동
+            var chatHistory = document.querySelector('.chat-history');
+            if (chatHistory) {
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html> 
