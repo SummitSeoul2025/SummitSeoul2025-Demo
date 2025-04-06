@@ -1,0 +1,20 @@
+name: CodeGuru Review
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize]
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: CodeGuru Review
+        uses: aws-actions/codeguru-reviewer@v1.1
+        with:
+          s3_bucket: codeguru-reviewer-summit-seoul-2025511      # Optional: S3 bucket for analysis artifacts
