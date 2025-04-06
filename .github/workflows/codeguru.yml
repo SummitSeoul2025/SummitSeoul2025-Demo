@@ -28,4 +28,4 @@ jobs:
       - name: CodeGuru Review
         uses: aws-actions/codeguru-reviewer@v1.1
         with:
-          s3_bucket: s3-codeguru-review-summit223      # Optional: S3 bucket for analysis artifacts
+          s3_bucket: codeguru-reviewer-summit-seoul-2025511      # Optional: S3 bucket for analysis artifacts
