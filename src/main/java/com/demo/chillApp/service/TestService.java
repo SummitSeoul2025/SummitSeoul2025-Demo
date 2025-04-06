@@ -17,7 +17,7 @@ import java.util.*;
 @Service
 public class TestService {
     // 1. 보안 취약점: public static 변수 노출
-    public static String API_KEY = "sk_test_12345";
+    public static String API_KEY = "sk_test_1234";
 
     // 2. 메모리 누수 가능성: 리소스 미닫힘
     public void readUserData(String fileName) {
