@@ -1,4 +1,4 @@
-# Spring Boot AWS Bedrock 프로젝트
+# Chill한 스무고개
 
 이 프로젝트는 AI/ML 기능을 위해 AWS Bedrock과 통합된 Spring Boot 애플리케이션입니다.
 
