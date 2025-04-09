@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>칠리콘의 동물 퀴즈 게임</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+            background-color: white;
+            color: #2d3436;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .main-content {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            justify-content: center;
+        }
+        
+        .left-panel {
+            flex: 0 0 45%;
+            background-color: white;
+            border-radius: 20px;
+            overflow: hidden;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 10px;
+        }
+        
+        .left-panel > div {
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .right-panel {
+            flex: 0 0 25%;
+            background-color: transparent;
+            border-radius: 0;
+            border: none;
+            overflow: hidden;
+            padding: 0;
+            max-height: 1300px;
+            overflow-y: auto;
+            margin-left: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+        
+        .header h1 {
+            color: #6c5ce7;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #636e72;
+            font-size: 15px;
+        }
+        
+        .chillguy-response {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            background-color: white;
+            padding: 0;
+            width: 100%;
+            justify-content: flex-end;
+        }
+        
+        .speech-bubble {
+            flex: 1;
+            background-color: #a29bfe;
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            position: relative;
+            margin-right: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+            min-width: 300px;
+            width: calc(100% - 150px);
+        }
+        
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            right: -15px;
+            top: 25px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: transparent transparent transparent #a29bfe;
+        }
+        
+        /* 상태별 색상만 남기고 나머지 제거 */
+        .speech-bubble.default {
+            background-color: #a29bfe;
+        }
+        
+        .speech-bubble.answer {
+            background-color: #ff7675;
+        }
+        
+        .speech-bubble.initial {
+            background-color: white;
+            color: #2d3436;
+        }
+        
+        .speech-bubble.default::after {
+            border-color: transparent transparent transparent #a29bfe;
+        }
+        
+        .speech-bubble.answer::after {
+            border-color: transparent transparent transparent #ff7675;
+        }
+        
+        .speech-bubble.initial::after {
+            border-color: transparent transparent transparent white;
+        }
+        
+        .character-image {
+            width: 130px;
+            height: auto;
+            object-fit: contain;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        
+        .question {
+            margin: 25px 0;
+            padding: 15px;
+            background-color: white;
+            border: 1px solid #eee;
+            border-radius: 15px;
+            font-size: 15px;
+            width: 100%;
+        }
+        
+        .form-container {
+            margin-top: 15px;
+            width: 100%;
+        }
+        
+        .form-divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+        
+        .form-divider:before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #ddd;
+            z-index: 0;
+        }
+        
+        .form-divider span {
+            background-color: white;
+            padding: 0 15px;
+            position: relative;
+            z-index: 1;
+            color: #636e72;
+            font-size: 14px;
+        }
+        
+        .input-form {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .input-form textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dfe6e9;
+            border-radius: 15px;
+            resize: none;
+            height: 100px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s;
+            background-color: white;
+            max-width: 100%;
+        }
+        
+        .input-form textarea:focus {
+            outline: none;
+            border-color: #6c5ce7;
+        }
+        
+        .button-container {
+            text-align: right;
+            margin-top: 12px;
+            width: 100%;
+        }
+        
+        .send-button {
+            background-color: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .answer-button {
+            background-color: #fd79a8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .send-button:hover, .answer-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .send-button:hover {
+            background-color: #5649c0;
+        }
+        
+        .answer-button:hover {
+            background-color: #e84393;
+        }
+        
+        .question-label, .answer-label {
+            font-weight: bold;
+            color: #2d3436;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        /* 히스토리 카드 스타일 */
+        .history-header {
+            text-align: center;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            color: #636e72;
+        }
+        
+        .chat-history {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .history-item {
+            padding: 12px;
+            border-radius: 10px;
+        }
+        
+        .history-question {
+            background-color: #f1f2f6;
+            border-left: 3px solid #6c5ce7;
+            margin-bottom: 5px;
+        }
+        
+        .history-answer {
+            background-color: #f8f9fa;
+            border-left: 3px solid #a29bfe;
+            margin-left: 20px;
+        }
+        
+        .history-label {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #636e72;
+        }
+        
+        .history-text {
+            font-size: 14px;
+        }
+        
+        @media (max-width: 1000px) {
+            .main-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .left-panel {
+                flex: 0 0 auto;
+                width: 90%;
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            
+            .right-panel {
+                flex: 0 0 auto;
+                width: 90%;
+                max-height: 300px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .speech-bubble {
+                min-width: 200px;
+                width: calc(100% - 100px);
+            }
+            
+            .character-image {
+                width: 90px;
+            }
+        }
+        
+        /* 카운터 카드 스타일 수정 */
+        .counter-card {
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .counter-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .counter-label {
+            font-weight: bold;
+            color: #636e72;
+            font-size: 14px;
+        }
+        
+        .counter-value {
+            font-size: 16px;
+            color: #2d3436;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        
+        .counter-value.warning {
+            color: #e17055;
+        }
+        
+        .counter-value.danger {
+            color: #d63031;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        /* 입력 폼 카드 스타일 */
+        .input-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 3px solid #6c5ce7;
+        }
+        
+        .answer-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 3px solid #fd79a8;
+        }
+        
+        /* 카드 스타일 - 그림자 제거 */
+        .card {
+            background-color: white;
+            border-radius: 15px;
+            border: 1px solid #eee;
+            padding: 20px;
+            box-shadow: none;
+        }
+        
+        .card-header {
+            text-align: center;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            color: #636e72;
+        }
+        
+        /* 프로그레스 바 스타일 */
+        .progress-bar-container {
+            margin-top: 10px;
+            width: 100%;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background-color: #fff;
+            border-radius: 2px;
+            animation: progress 1.5s infinite ease-in-out;
+        }
+        
+        .thinking-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+            display: block;
+        }
+        
+        @keyframes progress {
+            0% { width: 0; }
+            50% { width: 70%; }
+            100% { width: 0; }
+        }
+        
+        /* 대화 히스토리 카드 높이 조정 */
+        .right-panel .card:last-child {
+            min-height: 633px; /* 더 큰 높이로 설정 */
+        }
+        
+        /* 채팅 히스토리 영역은 그대로 유지 */
+        .chat-history {
+            overflow-y: visible;
+            max-height: none;
+        }
+        
+        /* 스크롤바 스타일 개선 */
+        .chat-history::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-history::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .chat-history::-webkit-scrollbar-thumb {
+            background: #a29bfe;
+            border-radius: 10px;
+        }
+        
+        .chat-history::-webkit-scrollbar-thumb:hover {
+            background: #6c5ce7;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="left-panel">
+            <div class="header">
+                <h1>칠리콘의 동물 퀴즈 게임</h1>
+            </div>
+            
+            <!-- 응답 영역 -->
+            <div class="chillguy-response">
+                <div th:class="${isAnswer != null && isAnswer ? 'speech-bubble answer' : 'speech-bubble default'}">
+                    <span id="response-text">안녕! 나는 칠리콘! 무슨 동물인지 맞춰봐</span>
+                    <!-- 프로그레스 바 추가 -->
+                    <div id="thinking-indicator" class="progress-bar-container" style="display: none;">
+                        <div class="progress-bar"></div>
+                        <span class="thinking-text">생각 중...</span>
+                    </div>
+                </div>
+                <img src="/images/chillicorn.png" alt="칠가이" class="character-image">
+            </div>
+            
+            <div class="form-container">
+                <!-- 질문 입력 폼 - 카드 스타일 -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="card-header">질문하기</div>
+                    <div class="input-form">
+                        <textarea id="question-input" placeholder="칠리콘에게 질문하세요." required></textarea>
+                        <div class="button-container">
+                            <button id="question-button" type="button" class="send-button">질문하기</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 정답 입력 폼 - 카드 스타일 -->
+                <div class="card">
+                    <div class="card-header">정답 입력하기</div>
+                    <div class="input-form">
+                        <textarea id="answer-input" placeholder="정답을 입력하세요." required></textarea>
+                        <div class="button-container">
+                            <button id="answer-button" type="button" class="answer-button">정답 확인하기</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 오른쪽 패널 - 게임 상태 및 대화 히스토리 -->
+        <div class="right-panel">
+            <!-- 게임 상태 카드 -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">게임 상태</div>
+                <div class="counter-card">
+                    <div class="counter-item">
+                        <div class="counter-label">질문</div>
+                        <div class="counter-value" id="questionCounter">0/20</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-label">시도</div>
+                        <div class="counter-value" id="guessCounter">0/3</div>
+                    </div>
+                </div>
+                <!-- 리셋 버튼 -->
+                <div style="text-align: center; margin-top: 10px;">
+                    <button id="reset-button" class="reset-button" style="background-color: #74b9ff; color: white; padding: 8px 15px; border-radius: 20px; border: none; cursor: pointer; font-size: 14px;">게임 리셋</button>
+                </div>
+            </div>
+            
+            <!-- 대화 히스토리 -->
+            <div class="card">
+                <div class="card-header">대화 히스토리</div>
+                <div class="chat-history">
+                    <!-- 대화 히스토리가 있을 경우 표시 -->
+                    <p style="text-align: center; color: #636e72; padding: 30px;">대화 기록이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 페이지 하단에 스크립트 추가 -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 초기 게임 상태 로드
+            loadGameState();
+            
+            // 초기 대화 히스토리 로드
+            loadChatHistory();
+            
+            // 질문 버튼 클릭 이벤트
+            const questionButton = document.getElementById('question-button');
+            if (questionButton) {
+                questionButton.addEventListener('click', function() {
+                    const question = document.getElementById('question-input').value;
+                    if (!question.trim()) return;
+                    
+                    const thinkingIndicator = document.getElementById('thinking-indicator');
+                    if (thinkingIndicator) {
+                        thinkingIndicator.style.display = 'block';
+                    }
+                    
+                    fetch('/api/ask', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ question: question })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 말풍선에 응답 메시지 표시
+                        const speechBubble = document.querySelector('#response-text');
+                        if (speechBubble && data.response) {
+                            speechBubble.textContent = data.response;
+                            
+                            // 정답 모드에 따라 말풍선 색상 변경
+                            const bubble = document.querySelector('.speech-bubble');
+                            if (data.isAnswer) {
+                                bubble.classList.remove('default');
+                                bubble.classList.add('answer');
+                            } else {
+                                bubble.classList.remove('answer');
+                                bubble.classList.add('default');
+                            }
+                        }
+                        
+                        // 프로그레스 바 숨기기
+                        if (thinkingIndicator) {
+                            thinkingIndicator.style.display = 'none';
+                        }
+                        
+                        // 입력 필드 비우기
+                        document.getElementById('question-input').value = '';
+                        
+                        // 게임 상태와 대화 히스토리 업데이트
+                        loadGameState();
+                        loadChatHistory();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (thinkingIndicator) {
+                            thinkingIndicator.style.display = 'none';
+                        }
+                    });
+                });
+            }
+            
+            // 정답 버튼 클릭 이벤트
+            const answerButton = document.getElementById('answer-button');
+            if (answerButton) {
+                answerButton.addEventListener('click', function() {
+                    const answer = document.getElementById('answer-input').value;
+                    if (!answer.trim()) return;
+                    
+                    const thinkingIndicator = document.getElementById('thinking-indicator');
+                    if (thinkingIndicator) {
+                        thinkingIndicator.style.display = 'block';
+                    }
+                    
+                    fetch('/api/answer', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ answer: answer })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 응답 메시지를 여기서 결정
+                        let message;
+                        
+                        if (data.hasOwnProperty('isCorrect')) {
+                            if (data.isCorrect) {
+                                message = "정답이야! 정답은 '" + data.targetAnimal + "'! 🎉🎉🎉";
+                            } else {
+                                message = "틀렸어! 다시 생각해봐."
+                            }
+                        } else {
+                            message = "이미 3번의 정답 시도를 모두 사용했습니다!";
+                        }
+                        
+                        document.querySelector('#response-text').textContent = message;
+                        
+                        // 말풍선 색상 변경 (정답 모드)
+                        const speechBubble = document.querySelector('.speech-bubble');
+                        speechBubble.classList.remove('default');
+                        speechBubble.classList.add('answer');
+                        
+                        // 프로그레스 바 숨기기
+                        if (thinkingIndicator) {
+                            thinkingIndicator.style.display = 'none';
+                        }
+                        
+                        // 입력 필드 비우기
+                        document.getElementById('answer-input').value = '';
+                        
+                        // 게임 상태와 대화 히스토리 업데이트
+                        loadGameState();
+                        loadChatHistory();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (thinkingIndicator) {
+                            thinkingIndicator.style.display = 'none';
+                        }
+                    });
+                });
+            }
+            
+            // 리셋 버튼 클릭 이벤트
+            document.getElementById('reset-button').addEventListener('click', function() {
+                fetch('/api/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // 리셋 완료 후 페이지 상태 업데이트
+                        document.querySelector('#response-text').textContent = "게임이 리셋됐어! 새로운 동물을 맞춰봐";
+                        
+                        // 말풍선 색상 초기화
+                        const speechBubble = document.querySelector('.speech-bubble');
+                        speechBubble.classList.remove('answer');
+                        speechBubble.classList.add('default');
+                        
+                        // 게임 상태와 대화 히스토리 업데이트
+                        loadGameState();
+                        loadChatHistory();
+                        
+                        // 입력 필드 비우기
+                        document.getElementById('question-input').value = '';
+                        document.getElementById('answer-input').value = '';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+            
+            // 대화 히스토리 스크롤 자동 최하단 이동
+            var chatHistory = document.querySelector('.chat-history');
+            if (chatHistory) {
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+        });
+
+        // 게임 상태 로드 함수
+        function loadGameState() {
+            fetch('/api/game-state')
+                .then(response => response.json())
+                .then(data => {
+                    // 카운터 업데이트
+                    document.getElementById('questionCounter').textContent = data.questionCount + '/20';
+                    document.getElementById('guessCounter').textContent = data.guessCount + '/3';
+                    
+                    // 카운터 색상 변경
+                    const questionCounter = document.getElementById('questionCounter');
+                    const guessCounter = document.getElementById('guessCounter');
+                    
+                    // 질문 카운터 색상 변경
+                    questionCounter.classList.remove('warning', 'danger');
+                    if (data.questionCount >= 15) {
+                        questionCounter.classList.add('warning');
+                    }
+                    if (data.questionCount >= 20) {
+                        questionCounter.classList.add('danger');
+                    }
+                    
+                    // 시도 카운터 색상 변경
+                    guessCounter.classList.remove('warning', 'danger');
+                    if (data.guessCount >= 2) {
+                        guessCounter.classList.add('warning');
+                    }
+                    if (data.guessCount >= 3) {
+                        guessCounter.classList.add('danger');
+                    }
+                    
+                    // 버튼 상태 업데이트
+                    const questionButton = document.getElementById('question-button');
+                    const answerButton = document.getElementById('answer-button');
+                    
+                    if (questionButton) {
+                        if (data.questionCount >= 20 || data.guessCount >= 3) {
+                            questionButton.disabled = true;
+                            questionButton.style.opacity = '0.5';
+                            questionButton.style.cursor = 'not-allowed';
+                        } else {
+                            questionButton.disabled = false;
+                            questionButton.style.opacity = '1';
+                            questionButton.style.cursor = 'pointer';
+                        }
+                    }
+                    
+                    if (answerButton) {
+                        if (data.guessCount >= 3) {
+                            answerButton.disabled = true;
+                            answerButton.style.opacity = '0.5';
+                            answerButton.style.cursor = 'not-allowed';
+                        } else {
+                            answerButton.disabled = false;
+                            answerButton.style.opacity = '1';
+                            answerButton.style.cursor = 'pointer';
+                        }
+                    }
+                })
+                .catch(error => console.error('Error loading game state:', error));
+        }
+        
+        // 대화 히스토리 로드 함수
+        function loadChatHistory() {
+            fetch('/api/chat-history')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.history) {
+                        updateHistory(data.history);
+                    }
+                })
+                .catch(error => console.error('Error loading chat history:', error));
+        }
+
+        // 히스토리 업데이트 함수를 수정
+        function updateHistory(history) {
+            const chatHistory = document.querySelector('.chat-history');
+            if (!chatHistory) return;
+            
+            // 히스토리가 있는 경우
+            if (history && history.length > 0) {
+                // 기존 히스토리 내용 비우기
+                chatHistory.innerHTML = '';
+                
+                // 전체 히스토리 다시 표시
+                history.forEach(item => {
+                    if (item.answerAttempt) {
+                        const answerAttemptDiv = document.createElement('div');
+                        answerAttemptDiv.className = 'history-item history-answer';
+                        answerAttemptDiv.style.borderLeft = '3px solid #fd79a8';
+                        answerAttemptDiv.style.marginLeft = '0';
+                        
+                        const questionText = document.createElement('span');
+                        questionText.className = 'history-text';
+                        questionText.textContent = item.question;
+                        
+                        answerAttemptDiv.appendChild(questionText);
+                        
+                        // 컨테이너에 추가
+                        chatHistory.appendChild(answerAttemptDiv);
+                        return;
+                    }
+                    
+                    // 질문-답변 쌍을 감싸는 컨테이너 생성
+                    const conversationContainer = document.createElement('div');
+                    conversationContainer.className = 'conversation-pair';
+                    
+                    // 질문 히스토리
+                    const questionDiv = document.createElement('div');
+                    questionDiv.className = 'history-item history-question';
+                    
+                    const questionLabel = document.createElement('span');
+                    questionLabel.className = 'history-label';
+                    questionLabel.textContent = '질문: ';
+                    
+                    const questionText = document.createElement('span');
+                    questionText.className = 'history-text';
+                    questionText.textContent = item.question;
+                    
+                    questionDiv.appendChild(questionLabel);
+                    questionDiv.appendChild(questionText);
+                    
+                    // 답변 히스토리
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'history-item history-answer';
+                    
+                    const answerLabel = document.createElement('span');
+                    answerLabel.className = 'history-label';
+                    answerLabel.textContent = '칠가이: ';
+                    
+                    const answerText = document.createElement('span');
+                    answerText.className = 'history-text';
+                    answerText.textContent = item.answer;
+                    
+                    answerDiv.appendChild(answerLabel);
+                    answerDiv.appendChild(answerText);
+                    
+                    // 질문과 답변을 컨테이너에 추가
+                    conversationContainer.appendChild(questionDiv);
+                    conversationContainer.appendChild(answerDiv);
+                    
+                    // 컨테이너를 히스토리에 추가
+                    chatHistory.appendChild(conversationContainer);
+                });
+                
+                // 스크롤 최하단으로 이동
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            } else {
+                // 히스토리가 없는 경우 비어있음 메시지 표시
+                chatHistory.innerHTML = '<p style="text-align: center; color: #636e72; padding: 30px;">대화 기록이 없습니다.</p>';
+            }
+        }
+    </script>
+</body>
+</html> 

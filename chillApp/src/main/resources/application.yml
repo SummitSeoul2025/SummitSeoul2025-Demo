@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: chillApp
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.demo.chillApp: INFO
+
+aws:
+  region: us-east-1
+  bedrock:
+    modelId: anthropic.claude-3-sonnet-20240229-v1:0
